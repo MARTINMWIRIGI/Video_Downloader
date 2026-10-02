@@ -11,6 +11,81 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /media/capabilities:
+    get:
+      operationId: getCapabilities
+      responses:
+        "200":
+          description: Processing limits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capabilities"
+  /media/upload:
+    post:
+      operationId: uploadMedia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaJob"
+  /media/url:
+    post:
+      operationId: submitUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UrlInput"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaJob"
+  /media/jobs/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getMediaJob
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaJob"
+    delete:
+      operationId: deleteMediaJob
+      responses:
+        "204": { description: Deleted }
+  /media/jobs/{id}/download:
+    get:
+      operationId: downloadMedia
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Media file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +101,44 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    Capabilities:
+      type: object
+      required: [available, maxBytes, maxDurationSeconds, expiresMinutes, formats, inputFormats]
+      properties:
+        available: { type: boolean }
+        maxBytes: { type: integer }
+        maxDurationSeconds: { type: integer }
+        expiresMinutes: { type: integer }
+        formats: { type: array, items: { type: string } }
+        inputFormats: { type: array, items: { type: string } }
+    UploadInput:
+      type: object
+      required: [file, format, quality, permission]
+      properties:
+        file: { type: string, format: binary }
+        format: { type: string, enum: [original, mp3, mp4, wav, webm, m4a] }
+        quality: { type: string, enum: [high, balanced, small] }
+        permission: { type: string, enum: ["true"] }
+    UrlInput:
+      type: object
+      required: [url, format, quality, permission]
+      properties:
+        url: { type: string, maxLength: 2048 }
+        format: { type: string, enum: [original, mp3, mp4, wav, webm, m4a] }
+        quality: { type: string, enum: [high, balanced, small] }
+        permission: { type: boolean, enum: [true] }
+    MediaJob:
+      type: object
+      required: [id, status, progress, filename, expiresAt]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [queued, downloading, probing, converting, complete, error] }
+        progress: { type: number }
+        filename: { type: string }
+        expiresAt: { type: string }
+        error: { type: string }
+        downloadUrl: { type: string }
+        outputBytes: { type: integer }
     HealthStatus:
       type: object
       properties:

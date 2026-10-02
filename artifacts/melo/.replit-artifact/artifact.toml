@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Melo — Media made simple"
+description = "A lightweight lawful media conversion utility for uploaded files and permitted direct public media URLs, with helpful format guides."
+version = "1.0.0"
+id = "artifacts/melo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22195
+
+[services.development]
+run = "pnpm --filter @workspace/melo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/melo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/melo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22195"
+BASE_PATH = "/"
